@@ -3,8 +3,37 @@
 #include <stdint.h>
 #include <stdio.h>
 
+/*
+
+DMF decoder and playback code emitter
+
+WARNING: This is janky code! It was made for my needs, for one project. Please
+do not get your expectations too high!
+
+This will take a Deflemask DMF file, for the Sega Genesis system, and will emit
+playback code for my sound engine. There are a few restrictions:
+
+ * Genesis only
+ * Only one effect column (sorry, Europe)
+ * Max 64 instruments
+ * PSG envelopes top out at 48 in length
+ * No CSM mode (EXT3)
+ * No samples (yet)
+ * 32 patterns per channel
+
+*/
+
 #define FRAMES_MODE_PAL 0
 #define FRAMES_MODE_NTSC 1
+
+#define ENV_LEN_MAX 64
+
+#define NOTE_EMPTY 0
+#define NOTE_OFF 100
+#define EFFECT_EMPTY 0xFF
+#define VOL_EMPTY 0xFF
+
+#define MAX_PTRN 32
 
 typedef enum system_t
 {
@@ -18,6 +47,23 @@ typedef enum system_t
 	SYSTEM_C64_6581 = 0x17,
 	SYSTEM_YM2151 = 0x08
 } system_t;
+
+// One entry in a pattern.
+typedef struct pattern_cell_t
+{
+	uint8_t note;
+	uint8_t octave;
+	uint8_t volume;
+	uint8_t instrument;
+	uint8_t effect_type;
+	uint8_t effect_value;
+} pattern_cell_t;
+
+typedef struct pattern_t
+{
+	unsigned int touched;
+	pattern_cell_t cells[64];
+} pattern_t;
 
 // Represents configuration of one operator's parameters.
 typedef struct patch_opdata_t
@@ -39,12 +85,22 @@ typedef struct patch_opdata_t
 // Represents an instrument patch.
 typedef struct instrument_t
 {
-	char name[256];
-	uint8_t algorithm;
-	uint8_t feedback;
-	uint8_t fms;
-	uint8_t ams;
-	patch_opdata_t opdata[4];
+	char name[16];
+	uint8_t type;
+	struct
+	{
+		uint8_t algorithm;
+		uint8_t feedback;
+		uint8_t fms;
+		uint8_t ams;
+		patch_opdata_t opdata[4];
+	} fm;
+	struct
+	{
+		uint8_t env_len;
+		int8_t loop_point;
+		uint8_t envelope[51];
+	} std;
 } instrument_t;
 
 typedef struct dmf_info_t
@@ -81,7 +137,8 @@ typedef struct dmf_info_t
 	// really supposed to be for YM2612 stuff
 
 	// Patterns data
-	// TODO: This
+	// 10 channels, 32 patterns stored each
+	pattern_t patterns[10][MAX_PTRN];
 
 	// PCM sample data
 	// TODO: This
