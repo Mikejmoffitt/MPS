@@ -26,7 +26,7 @@ playback code for my sound engine. There are a few restrictions:
 #define FRAMES_MODE_PAL 0
 #define FRAMES_MODE_NTSC 1
 
-#define ENV_LEN_MAX 64
+#define ENV_LEN_MAX 30
 
 #define NOTE_EMPTY 0
 #define NOTE_OFF 100
@@ -62,6 +62,7 @@ typedef struct pattern_cell_t
 typedef struct pattern_t
 {
 	unsigned int touched;
+	unsigned int length;
 	pattern_cell_t cells[64];
 } pattern_t;
 
@@ -99,7 +100,7 @@ typedef struct instrument_t
 	{
 		uint8_t env_len;
 		int8_t loop_point;
-		uint8_t envelope[51];
+		uint8_t envelope[ENV_LEN_MAX];
 	} std;
 } instrument_t;
 
