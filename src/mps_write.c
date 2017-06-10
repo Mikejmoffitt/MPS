@@ -1,8 +1,103 @@
 #include "mps_write.h"
 
+static int cell_is_empty(pattern_cell_t *c)
+{
+	return (c->note == NOTE_EMPTY &&
+	        c->effect_type == EFFECT_EMPTY);
+}
+
+static size_t write_nops(FILE *f, uint8_t nops)
+{
+	if (nops == 0)
+	{
+		return 0;
+	}
+	printf("NOP %d\n", nops);
+	mps_cell_t wcell;
+	wcell.note = MPS_NOTE_NOP;
+	wcell.octave = nops;
+	return fwrite((void *)&wcell, 1, sizeof(mps_cell_t), f);
+}
+
+static size_t write_cell(FILE *f, pattern_cell_t *c)
+{
+	printf("CELL\n");
+	mps_cell_t wcell;
+	// Handle special note cases in case values change in the future
+	if (c->note == NOTE_EMPTY)
+	{
+		wcell.note = MPS_NOTE_EMPTY;
+	}
+	else if (c->note == NOTE_OFF)
+	{
+		wcell.note = MPS_NOTE_OFF;
+	}
+	else
+	{
+		wcell.note = c->note;
+	}
+
+	wcell.octave = c->octave;
+
+	if (c->volume == VOL_EMPTY)
+	{
+		wcell.volume = MPS_VOL_EMPTY;
+	}
+	else
+	{
+		wcell.volume = c->volume;
+	}
+
+	wcell.instrument = c->instrument;
+
+	if (c->effect_type == EFFECT_EMPTY)
+	{
+		wcell.effect_type = MPS_EFFECT_EMPTY;
+	}
+	else
+	{
+		wcell.effect_type = c->effect_type;
+	}
+
+	wcell.effect_value = c->effect_value;
+
+	return fwrite((void *)&wcell, 1, sizeof(mps_cell_t), f);
+}
+
 size_t mps_write_pattern(FILE *f, pattern_t *p)
 {
 	size_t written = 0;
+	unsigned int i = 0;
+	unsigned int nops = 0;
+
+	// Empty patterns are not written at all
+	if (!p->touched)
+	{
+		return 0;
+	}
+
+	while (i < p->length)
+	{
+		pattern_cell_t *cell = &(p->cells[i]);
+		// Count NOPs between notes
+		if (cell_is_empty(cell))
+		{
+			nops++;
+		}
+		// If there's a note hit, write out nops and the
+		else
+		{
+			written += write_nops(f, nops);
+			nops = 0;
+			written += write_cell(f, cell);
+		}
+		i++;
+	}
+
+	if (nops > 0)
+	{
+		written += write_nops(f, nops);
+	}
 
 	return written;
 }

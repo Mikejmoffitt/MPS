@@ -36,6 +36,7 @@ are provided below.
 
 #define MPS_NOTE_EMPTY 0
 #define MPS_NOTE_OFF 100
+#define MPS_NOTE_NOP 0xEA
 #define MPS_EFFECT_EMPTY 0xFF
 #define MPS_VOL_EMPTY 0xFF
 
@@ -48,7 +49,6 @@ typedef struct mps_cell_t
 	BYTE instrument;
 	BYTE effect_type;
 	BYTE effect_value;
-	BYTE rest; // Number of lines to wait until playing the next cell
 } mps_cell_t;
 
 typedef struct mps_instrument_t
