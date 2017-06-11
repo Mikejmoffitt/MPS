@@ -1,0 +1,6 @@
+./dmfdecode
+src/*.o
+src/*.swp
+*.swp
+*.o
+*.mps
