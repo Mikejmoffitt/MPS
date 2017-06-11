@@ -151,3 +151,22 @@ size_t mps_write_instrument(FILE *f, instrument_t *i)
 
 	return written;
 }
+
+size_t mps_write_header(FILE *f, dmf_info_t *dmf_info)
+{
+	mps_header_t header;
+	size_t written = 0;
+
+	header.mps_name[0] = 'M';
+	header.mps_name[1] = 'P';
+	header.mps_name[2] = 'S';
+	header.mps_name[3] = '\0';
+
+	header.track_length = dmf_info->total_rows_in_pattern_matrix;
+	header.pattern_length = dmf_info->total_rows_per_pattern;
+
+	// Throw in the header first
+	written += fwrite((void *)&header, sizeof(mps_header_t), 1, f);
+
+	return written;
+}

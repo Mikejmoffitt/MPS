@@ -2,9 +2,19 @@
 #include "dmf.h"
 #include "mps_write.h"
 
+size_t fwrite16be(FILE *f, uint16_t value)
+{
+	size_t written = 0;
+	written += fputc(((value & 0xFF00) >> 8), f);
+	written += fputc((value & 0x00FF), f);
+	return written;
+}
+
 void decode(const char *fname, const char *outname)
 {
 	size_t wp = 0;
+	// TODO: Check this, not hard-code it
+	const unsigned int channel_count = 10;
 	FILE *f;
 	dmf_info_t *dmf_info;
 	dmf_info = dmf_create(fname);
@@ -14,11 +24,8 @@ void decode(const char *fname, const char *outname)
 
 	f = fopen(outname, "wb");
 
-	// TODO: System channel lookup, not 10
-
-	// Big-endian WORD per entry, per channel, times total length
-	printf("Allocating space for arrangement\n");
-	wp = 2 * 10 * dmf_info->total_rows_in_pattern_matrix;
+	printf("Allocating space for arrangement and metainfo\n");
+	wp += sizeof(mps_header_t) + (2 * channel_count * dmf_info->total_rows_in_pattern_matrix);
 	fseek(f, wp, SEEK_SET);
 
 	printf("Writing MPS instruments\n");
@@ -31,8 +38,7 @@ void decode(const char *fname, const char *outname)
 
 	printf("Writing MPS patterns\n");
 
-	// TODO: This should use a system channel lookup, just just be ten
-	for (unsigned int x = 0; x < 10; x++)
+	for (unsigned int x = 0; x < channel_count; x++)
 	{
 		for (unsigned int y = 0; y < MAX_PTRN; y++)
 		{
@@ -47,6 +53,23 @@ void decode(const char *fname, const char *outname)
 	}
 
 	printf("Writing arrangement\n");
+
+	fseek(f, sizeof(mps_header_t), SEEK_SET);
+	wp = 0;
+
+	for (unsigned int x = 0; x < channel_count; x++)
+	{
+		for (unsigned int y = 0; y < dmf_info->total_rows_in_pattern_matrix; y++)
+		{
+			unsigned int pattern_id = dmf_info->pattern_matrix[(y * channel_count) + x];
+			printf("%d, %d: pattern %d at location %X\n", x, y, pattern_id, pattern_loc[x][pattern_id]);
+			wp += fwrite16be(f, pattern_loc[x][pattern_id]);
+		}
+	}
+
+	printf("Wriitng header\n");
+	fseek(f, 0, SEEK_SET);
+	mps_write_header(f, dmf_info);
 
 	fclose(f);
 }

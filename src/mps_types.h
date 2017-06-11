@@ -77,5 +77,12 @@ typedef struct mps_instrument_t
 	BYTE pad32;
 } mps_instrument_t;
 
+typedef struct mps_header_t
+{
+	char mps_name[4];
+	BYTE track_length; // Length in patterns
+	BYTE pattern_length; // Size of pattern
+} mps_header_t;
+
 
 #endif // MPS_TYPES_H
