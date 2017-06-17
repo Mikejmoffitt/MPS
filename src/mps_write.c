@@ -2,8 +2,10 @@
 
 static int cell_is_empty(pattern_cell_t *c)
 {
+	printf(" > empty eval: note %X fx_type %X vol %X\n", c->note, c->effect_type, c->volume);
 	return (c->note == NOTE_EMPTY &&
-	        c->effect_type == EFFECT_EMPTY);
+	        c->effect_type == EFFECT_EMPTY &&
+	        c->volume == VOL_EMPTY);
 }
 
 static size_t write_nops(FILE *f, uint8_t nops)
@@ -115,6 +117,12 @@ size_t mps_write_instrument(FILE *f, instrument_t *i)
 		for (unsigned int j = 0; j < i->std.env_len; j++)
 		{
 			uint8_t setval = i->std.envelope[j];
+			if (j == 29)
+			{
+				setval |= ENV_PROP_END;
+				inst.psg.envelope[j] = setval;
+				break;
+			}
 			if (j == i->std.loop_point)
 			{
 				setval |= ENV_PROP_LOOP;
@@ -164,6 +172,10 @@ size_t mps_write_header(FILE *f, dmf_info_t *dmf_info)
 
 	header.track_length = dmf_info->total_rows_in_pattern_matrix;
 	header.pattern_length = dmf_info->total_rows_per_pattern;
+
+	header.time_base = dmf_info->time_base;
+	header.tick[0] = dmf_info->tick[0];
+	header.tick[1] = dmf_info->tick[1];
 
 	// Throw in the header first
 	written += fwrite((void *)&header, sizeof(mps_header_t), 1, f);

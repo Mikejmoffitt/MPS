@@ -402,13 +402,14 @@ dmf_info_t *dmf_create(const char *path)
 						cell->volume = VOL_EMPTY;
 					}
 					// instrument
-					cell->instrument = instrument;
 					if (instrument >= 0)
 					{
+						cell->instrument = instrument;
 						//printf("%02X ", instrument);
 					}
 					else
 					{
+						cell->instrument = 0xFF;
 						//printf("-- ");
 					}
 					// effect

@@ -67,7 +67,7 @@ void decode(const char *fname, const char *outname)
 		}
 	}
 
-	printf("Wriitng header\n");
+	printf("Writing header\n");
 	fseek(f, 0, SEEK_SET);
 	mps_write_header(f, dmf_info);
 

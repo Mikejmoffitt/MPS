@@ -82,6 +82,9 @@ typedef struct mps_header_t
 	char mps_name[4];
 	BYTE track_length; // Length in patterns
 	BYTE pattern_length; // Size of pattern
+	BYTE time_base;
+	BYTE tick[2];
+	BYTE padding;
 } mps_header_t;
 
 

@@ -21,12 +21,14 @@ Header
 * 4 byte string "MPS" (includes null terminator)
 * 1 byte describing total track length (in patterns)
 * 1 byte describing length of a pattern (in rows)
+* 1 byte describing the time base
+* 2 bytes describing the even/odd tick value
 
 Arrangement
 -----------
 Phrases are indicated in Big-Endian to a location relative to the beginning
-of the MPS file. The arrangment table is channel-major.
-* 10 x (track length) table of pointers to phrases.
+of the MPS file. The arrangment table is made of 16-bit words, channel-major.
+* 10 * 2 bytes * (track length) table of pointers to phrases.
 
 Instruments
 -----------
